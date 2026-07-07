@@ -1,0 +1,21 @@
+Company,Parent,Sector,Country,Competitors,CEO
+Pfizer,,Pharmaceuticals,USA,"Moderna;Johnson & Johnson;Merck;AstraZeneca",Albert Bourla
+Moderna,,Biotechnology,USA,"Pfizer;BioNTech;Novavax",Stephane Bancel
+BioNTech,,Biotechnology,Germany,"Moderna;CureVac;Pfizer",Ugur Sahin
+Johnson & Johnson,,Pharmaceuticals,USA,"Pfizer;Merck;Sanofi;GSK",Joaquin Duato
+Merck,,Pharmaceuticals,USA,"Pfizer;Johnson & Johnson;Eli Lilly;Bristol Myers Squibb",Robert Davis
+AstraZeneca,,Pharmaceuticals,UK,"GSK;Pfizer;Novartis;Sanofi",Pascal Soriot
+GSK,,Pharmaceuticals,UK,"AstraZeneca;Sanofi;Pfizer",Emma Walmsley
+Sanofi,,Pharmaceuticals,France,"GSK;AstraZeneca;Merck;Novartis",Paul Hudson
+Novartis,,Pharmaceuticals,Switzerland,"Roche;AstraZeneca;Sanofi",Vas Narasimhan
+Roche,,Pharmaceuticals,Switzerland,"Novartis;Merck;Pfizer",Thomas Schinecker
+Eli Lilly,,Pharmaceuticals,USA,"Merck;Novo Nordisk;Pfizer",David Ricks
+Novo Nordisk,,Pharmaceuticals,Denmark,"Eli Lilly;Sanofi",Mike Doustdar
+Bristol Myers Squibb,,Pharmaceuticals,USA,"Merck;Pfizer;AbbVie",Chris Boerner
+AbbVie,,Pharmaceuticals,USA,"Bristol Myers Squibb;Amgen;Johnson & Johnson",Robert Michael
+Amgen,,Biotechnology,USA,"AbbVie;Gilead Sciences;Regeneron",Robert Bradway
+Gilead Sciences,,Biotechnology,USA,"Amgen;Vertex Pharmaceuticals;AbbVie",Daniel O'Day
+Regeneron,,Biotechnology,USA,"Amgen;Vertex Pharmaceuticals;Novartis",Leonard Schleifer
+Vertex Pharmaceuticals,,Biotechnology,USA,"Regeneron;Gilead Sciences",Reshma Kewalramani
+Takeda,,Pharmaceuticals,Japan,"Astellas Pharma;Daiichi Sankyo;Eisai",Christophe Weber
+Astellas Pharma,,Pharmaceuticals,Japan,"Takeda;Daiichi Sankyo",Naoki Okamura
