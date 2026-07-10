@@ -281,32 +281,103 @@ with tab3:
 
         if path_result and path_result[0]["pathNames"]:
             path_names = path_result[0]["pathNames"]
-            st.success(" → ".join(path_names))
-            st.caption(f"{len(path_names) - 1} hop(s) between {company_a} and {company_b}")
 
-            path_edges_query = run_query("""
-                MATCH (c:Company)-[:COMPETES_WITH]-(neighbor)
-                WHERE c.name IN $path_names
-                RETURN c.name AS source, neighbor.name AS target
-            """, {"path_names": path_names})
-
-            all_sectors = run_query("""
-                MATCH (c:Company)-[:OPERATES_IN]->(s:Sector)
+            # Full network graph with the path highlighted in context
+            st.markdown("**Full network** (highlighted = the path found):")
+            all_company_nodes = run_query("""
+                MATCH (c:Company)
+                OPTIONAL MATCH (c)-[:OPERATES_IN]->(s:Sector)
                 RETURN c.name AS name, s.name AS sector
             """)
-            sector_lookup = {row["name"]: row["sector"] for row in all_sectors}
+            all_company_edges = run_query("""
+                MATCH (c1:Company)-[:COMPETES_WITH]-(c2:Company)
+                RETURN DISTINCT c1.name AS source, c2.name AS target
+            """)
+            nodes = [{"id": c["name"], "label": c["name"], "sector": c["sector"]} for c in all_company_nodes]
+            edges = [(e["source"], e["target"]) for e in all_company_edges]
+            render_network(nodes, edges, highlight=set(path_names), height="500px")
 
-            node_ids = set(path_names)
-            edges = []
-            for row in path_edges_query:
-                node_ids.add(row["source"])
-                node_ids.add(row["target"])
-                edges.append((row["source"], row["target"]))
+            # Animated step-by-step chain reveal below
+            st.markdown("**Connection breakdown:**")
+            sector_lookup = {c["name"]: c["sector"] for c in all_company_nodes}
 
-            nodes = [{"id": nid, "label": nid, "sector": sector_lookup.get(nid)} for nid in node_ids]
+            def color_for(n):
+                s = sector_lookup.get(n)
+                if s == "Pharmaceuticals":
+                    return "#378ADD"
+                if s == "Biotechnology":
+                    return "#D85A30"
+                return "#888780"
 
-            st.markdown("**Path visualization** (highlighted = the shortest path found):")
-            render_network(nodes, edges, highlight=set(path_names), height="450px")
+            import json
+            path_json = json.dumps(path_names)
+            colors_json = json.dumps({n: color_for(n) for n in path_names})
+
+            chain_html = f"""
+            <div id="chainWrap" style="display:flex; align-items:center; justify-content:center; min-height:150px; flex-wrap:nowrap; overflow-x:auto; padding:0 4px; font-family:sans-serif;"></div>
+            <div id="descBox" style="opacity:0; transition:opacity 0.6s ease; margin-top:20px; padding:1rem 1.25rem; background:#1a1d23; border-radius:8px; font-size:14px; color:#c0c0c0; line-height:1.7; font-family:sans-serif;"></div>
+            <script>
+            const path = {path_json};
+            const colorMap = {colors_json};
+            function buildChainDOM(path){{
+              const wrap = document.getElementById("chainWrap");
+              wrap.innerHTML = "";
+              path.forEach((name, i) => {{
+                const col = document.createElement("div");
+                col.style.cssText = "opacity:0; transition:opacity 0.5s ease; display:flex; flex-direction:column; align-items:center; gap:8px; min-width:120px; flex-shrink:0;";
+                col.id = "chainNode" + i;
+                col.innerHTML = `
+                  <div style="width:52px; height:52px; border-radius:50%; background:${{colorMap[name]}}; display:flex; align-items:center; justify-content:center; color:white; font-weight:600; font-size:20px;">
+                    ${{name[0]}}
+                  </div>
+                  <span style="font-size:13px; font-weight:500; text-align:center; color:white;">${{name}}</span>`;
+                wrap.appendChild(col);
+                if (i < path.length - 1){{
+                  const lineWrap = document.createElement("div");
+                  lineWrap.id = "chainLineWrap" + i;
+                  lineWrap.style.cssText = "width:60px; height:4px; margin:0 4px 28px; flex-shrink:0;";
+                  lineWrap.innerHTML = '<svg width="100%" height="4"><line id="chainLine' + i + '" x1="0" y1="2" x2="0" y2="2" stroke="#1D9E75" stroke-width="3" stroke-linecap="round"/></svg>';
+                  wrap.appendChild(lineWrap);
+                }}
+              }});
+            }}
+            async function playSequence(){{
+              buildChainDOM(path);
+              const descBox = document.getElementById("descBox");
+              for (let i = 0; i < path.length; i++){{
+                document.getElementById("chainNode" + i).style.opacity = 1;
+                await new Promise(r => setTimeout(r, 350));
+                if (i < path.length - 1){{
+                  const lineEl = document.getElementById("chainLine" + i);
+                  const wrapWidth = document.getElementById("chainLineWrap" + i).offsetWidth;
+                  const duration = 400;
+                  let start = null;
+                  await new Promise(resolve => {{
+                    function animate(ts){{
+                      if (!start) start = ts;
+                      const progress = Math.min((ts - start) / duration, 1);
+                      lineEl.setAttribute("x2", String(wrapWidth * progress));
+                      if (progress < 1) requestAnimationFrame(animate);
+                      else resolve();
+                    }}
+                    requestAnimationFrame(animate);
+                  }});
+                  await new Promise(r => setTimeout(r, 150));
+                }}
+              }}
+              await new Promise(r => setTimeout(r, 200));
+              if (path.length === 2){{
+                descBox.textContent = path[0] + " and " + path[path.length-1] + " are direct competitors.";
+              }} else {{
+                descBox.textContent = path[0] + " and " + path[path.length-1] + " are not direct competitors, but are indirectly connected through " + path.slice(1, -1).join(", ") + ".";
+              }}
+              descBox.style.opacity = 1;
+            }}
+            playSequence();
+            </script>
+            """
+            components.html(chain_html, height=260)
+            st.caption(f"{len(path_names) - 1} hop(s) between {company_a} and {company_b}")
         else:
             st.warning(f"No connection found between {company_a} and {company_b} — they sit in disconnected competitive clusters.")
 
