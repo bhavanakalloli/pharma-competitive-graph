@@ -57,6 +57,8 @@ def render_network(nodes, edges, highlight=None, height="600px"):
         )
 
     for src, tgt in edges:
+        if src not in added or tgt not in added:
+            continue
         is_path_edge = src in highlight and tgt in highlight
         net.add_edge(
             src, tgt,
@@ -165,9 +167,9 @@ with tab0:
 
     if selected_countries:
         all_companies_full = run_query("""
-            MATCH (c:Company)-[:OPERATES_IN]->(s:Sector)
-            MATCH (c)-[:HEADQUARTERED_IN]->(country:Country)
+            MATCH (c:Company)-[:HEADQUARTERED_IN]->(country:Country)
             WHERE country.name IN $countries
+            OPTIONAL MATCH (c)-[:OPERATES_IN]->(s:Sector)
             RETURN c.name AS name, s.name AS sector
         """, {"countries": selected_countries})
         allowed_names = {c["name"] for c in all_companies_full}
@@ -179,7 +181,8 @@ with tab0:
                  if e["source"] in allowed_names and e["target"] in allowed_names]
     else:
         all_companies_full = run_query("""
-            MATCH (c:Company)-[:OPERATES_IN]->(s:Sector)
+            MATCH (c:Company)
+            OPTIONAL MATCH (c)-[:OPERATES_IN]->(s:Sector)
             RETURN c.name AS name, s.name AS sector
         """)
         all_edges = run_query("""
